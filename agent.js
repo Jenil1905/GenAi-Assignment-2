@@ -4,7 +4,6 @@ import fs from "fs";
 import { exec } from "child_process";
 import readline from "readline";
 
-// --- Tools Implementation ---
 
 function createFolder(folderName) {
     try {
@@ -64,14 +63,12 @@ const tool_map = {
     listFiles
 };
 
-// --- Agent Initialization ---
 
 const client = new OpenAI({
     baseURL: "https://openrouter.ai/api/v1",
     apiKey: process.env.OPENROUTER_API_KEY
 });
 
-// --- Dynamic System Prompt Builder ---
 
 function buildSystemPrompt(targetWebsite) {
     const folderName = targetWebsite.toLowerCase().replace(/\s+/g, "_") + "_clone";
@@ -224,7 +221,6 @@ Do NOT stop early. The output must look like a real, premium website. If the CSS
 `;
 }
 
-// --- Ask user for target website ---
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -232,7 +228,6 @@ const rl = readline.createInterface({
 });
 
 async function main() {
-    // Check if website name was passed as a CLI argument
     const cliArg = process.argv[2];
 
     if (cliArg) {
@@ -249,10 +244,9 @@ async function main() {
     }
 }
 
-// Maps uppercase/shorthand step names the LLM sometimes produces → canonical tool names
 const STEP_ALIAS_MAP = {
     "CREATE_FOLDER":   { tool_name: "createFolder",    argKey: "folderName" },
-    "WRITE_FILE":      { tool_name: "writeFile",        argKey: null },          // special: needs path + content
+    "WRITE_FILE":      { tool_name: "writeFile",        argKey: null },         
     "READ_FILE":       { tool_name: "readFile",         argKey: "path" },
     "EXECUTE_COMMAND": { tool_name: "executeCommand",   argKey: "cmd" },
     "LIST_FILES":      { tool_name: "listFiles",        argKey: "folderPath" },
@@ -267,7 +261,6 @@ async function callTool(parsedContent) {
     if (toolName === "writeFile") {
         return await tool_map.writeFile(args.path, args.content);
     }
-    // Single-arg tools
     const singleArg = args.folderName ?? args.path ?? args.cmd ?? args.folderPath ?? Object.values(args)[0];
     return await tool_map[toolName](singleArg);
 }
@@ -297,7 +290,6 @@ async function runAgent(targetWebsite) {
 
             const rawContent = response.choices[0].message.content;
 
-            // --- Graceful JSON parse with truncation recovery ---
             let parsedContent;
             try {
                 parsedContent = JSON.parse(rawContent);
@@ -323,19 +315,16 @@ async function runAgent(targetWebsite) {
 
             let step = parsedContent.step?.toUpperCase();
 
-            // --- Alias normalization: handle CREATE_FOLDER, WRITE_FILE, etc. ---
             if (STEP_ALIAS_MAP[step]) {
                 const alias = STEP_ALIAS_MAP[step];
                 console.log(`🔧 [auto-mapped ${step}] Using tool: ${alias.tool_name}...`);
 
-                // Reconstruct a proper TOOL-shaped object
                 parsedContent = {
                     step: "TOOL",
                     tool_name: alias.tool_name,
                     tool_args: parsedContent.tool_args || parsedContent.args || {}
                 };
 
-                // If the LLM put the args at top level, rescue them
                 if (!parsedContent.tool_args || Object.keys(parsedContent.tool_args).length === 0) {
                     const rescued = { ...parsedContent };
                     delete rescued.step;
@@ -356,7 +345,6 @@ async function runAgent(targetWebsite) {
             else if (step === "TOOL") {
                 console.log(`🔧 Using tool: ${parsedContent.tool_name}...`);
                 const result = await callTool(parsedContent);
-                // Truncate long results in console to keep output readable
                 const displayResult = result.length > 300 ? result.slice(0, 300) + "...[truncated]" : result;
                 console.log(`👁️  OBSERVE: ${displayResult}\n`);
                 messages.push({
