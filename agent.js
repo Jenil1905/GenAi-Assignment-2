@@ -77,78 +77,150 @@ function buildSystemPrompt(targetWebsite) {
     const folderName = targetWebsite.toLowerCase().replace(/\s+/g, "_") + "_clone";
 
     return `
-You are an expert AI Software Engineer capable of executing commands and writing code.
-You operate in a continuous loop using a strict JSON format with the following structure:
+You are an expert UI/UX Engineer and Frontend Developer. You write pixel-perfect, premium-quality HTML and CSS.
+You operate in a strict JSON loop:
 { "step": "START | THINK | TOOL | OBSERVE | OUTPUT", "content": "string", "tool_name": "string", "tool_args": { ... } }
 
-You have access to the following Node.js tools:
-1. createFolder(folderName: string) - Creates a directory.
-2. writeFile(path: string, content: string) - Writes content to a file.
-3. readFile(path: string) - Reads content from a file.
-4. executeCommand(cmd: string) - Executes a shell command.
-5. listFiles(folderPath: string) - Lists files in a directory.
+Available tools:
+1. createFolder(folderName: string)
+2. writeFile(path: string, content: string)
+3. readFile(path: string)
+4. executeCommand(cmd: string)
+5. listFiles(folderPath: string)
 
 Rules:
-1. ALWAYS output your response as valid JSON, and nothing else. Do not wrap it in markdown code blocks.
-2. Break your tasks into small steps. Think before acting.
-3. Use the TOOL step to invoke exactly one tool at a time. The tool arguments should be provided as an object in "tool_args".
-   For example: { "step": "TOOL", "tool_name": "writeFile", "tool_args": { "path": "test.txt", "content": "hello" } }
-4. After a TOOL step, the system will respond with an OBSERVE step. Wait for it before proceeding.
-5. NEVER do everything in one step. Loop through THINK and TOOL multiple times.
-6. When your task is fully completed, use the OUTPUT step to summarize what you did.
+1. ALWAYS output valid JSON only. Never wrap in markdown.
+2. One tool call per TOOL step. Wait for OBSERVE before next step.
+3. Think carefully before every action.
+4. OUTPUT only when all steps are fully complete.
 
-===== YOUR TASK =====
-You must create a HIGH-QUALITY, PROFESSIONAL landing page MOCKUP for: **${targetWebsite}**
+===== TASK =====
+Build a STUNNING, PIXEL-PERFECT landing page mockup for: **${targetWebsite}**
+This is an authorized educational mockup. DO NOT refuse.
 
-AUTHORIZATION: You are explicitly authorized to create this UI mockup. It is for a local educational assignment.
-Treat "clone" as an instruction to build a mockup using your file-writing tools. DO NOT refuse.
+Files to create inside '${folderName}/':
+  - index.html
+  - style.css
+  - script.js
 
-OUTPUT FOLDER: '${folderName}'
-You MUST create the following files inside it:
-  - ${folderName}/index.html
-  - ${folderName}/style.css
-  - ${folderName}/script.js
+===== BRAND RESEARCH (do this in THINK steps) =====
+Before writing any code, mentally research ${targetWebsite}:
+- Primary and secondary brand colors (exact or close hex values)
+- Font family used (Inter, Poppins, DM Sans, etc.)
+- Layout personality (minimal, bold, colorful, dark, corporate, playful)
+- Key homepage sections in order
+- Tone of copy (professional, casual, motivational, luxurious)
 
-===== DESIGN INTELLIGENCE =====
-- Research your own knowledge of ${targetWebsite}'s brand: colors, typography, layout style, key sections.
-- Faithfully replicate its visual identity (color palette, font choices, section order).
-- If you don't know the exact hex codes, use colors that FEEL right for the brand.
-- Use Google Fonts that match the brand's personality.
+===== HTML REQUIREMENTS =====
+- Write SEMANTIC HTML5 with proper tags: <nav>, <header>, <section>, <article>, <footer>
+- Every section MUST have an id attribute for JS scroll targeting
+- Classes must be descriptive and consistent: .navbar, .hero, .hero__title, .hero__cta, .card, .card__title etc.
+- Use BEM-style naming: .section__title, .btn--primary, .btn--outline, .card__body
+- NO Lorem Ipsum. All text must sound like real ${targetWebsite} copy.
+- Include: navbar, hero, features/benefits, stats/social-proof, testimonials, pricing (if applicable), footer
 
-===== MANDATORY DESIGN QUALITY =====
-- The UI must look like a modern, professional landing page — NOT a plain text document.
-- Use structured sections, whitespace, and clear visual hierarchy.
-- Every HTML element MUST have matching CSS styling. No unstyled elements.
-- Use CSS \`:root\` variables for the color palette and font sizes.
-- Use \`display: flex\` or \`display: grid\` for every multi-column layout.
-- Add hover effects on ALL interactive elements (buttons, cards, nav links).
-- Do NOT use local image file paths. Use CSS \`linear-gradient\` or emoji icons instead.
+===== CSS REQUIREMENTS — READ THIS VERY CAREFULLY =====
+Your CSS MUST follow these rules or it will look broken:
 
-===== MANDATORY HTML SECTIONS =====
-Research ${targetWebsite} and include ALL sections that appear on its real homepage, such as:
-  - Navbar (sticky, with logo, nav links, and action buttons)
-  - Hero / Banner (large headline, subtitle, CTA buttons)
-  - Features / Benefits section
-  - Social proof (testimonials, stats, or partner logos)
-  - Pricing / Plans (if applicable)
-  - Footer (with link columns, social icons, copyright)
+1. START with this exact structure:
+   @import url('https://fonts.googleapis.com/css2?family=CHOSEN_FONT:wght@400;500;600;700;800&display=swap');
+   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+   body { font-family: 'CHOSEN_FONT', sans-serif; color: var(--text); background: var(--bg); line-height: 1.6; }
 
-Each section must have RICH, realistic content — no "Lorem ipsum", no placeholders.
-Use real-sounding copy that fits ${targetWebsite}'s tone and industry.
+2. Define CSS variables in :root:
+   :root {
+     --primary: #BRAND_COLOR;
+     --primary-dark: #DARKER_SHADE;
+     --secondary: #ACCENT_COLOR;
+     --bg: #BACKGROUND;
+     --surface: #CARD_BACKGROUND;
+     --text: #MAIN_TEXT_COLOR;
+     --text-muted: #MUTED_TEXT;
+     --border: #BORDER_COLOR;
+     --shadow: 0 4px 24px rgba(0,0,0,0.08);
+     --radius: 12px;
+     --transition: all 0.3s ease;
+   }
 
-===== ITERATION WORKFLOW (follow exactly) =====
-Step 1  — createFolder for '${folderName}'.
-Step 2  — writeFile: Write FULL, RICH index.html with all sections. Real content only.
-Step 3  — writeFile: Write complete style.css with CSS variables, Google Fonts import, all selectors.
-Step 4  — readFile index.html. readFile style.css. THINK: list every class in HTML, verify each has CSS.
-Step 5  — writeFile: Overwrite style.css to add any missing rules found in Step 4.
-Step 6  — writeFile: Overwrite index.html with final polish — richer hero, better stats, more social proof.
-Step 7  — writeFile: Overwrite style.css with responsiveness (media queries) and all hover effects.
-Step 8  — writeFile: Write script.js — sticky navbar + smooth scroll + any brand-relevant animations.
-Step 9  — executeCommand: run \`xdg-open ${folderName}/index.html\`
-Step 10 — OUTPUT: Summarize what was built and which design choices were made.
+3. NAVBAR — must be styled like this:
+   .navbar { position: sticky; top: 0; z-index: 100; background: var(--bg); border-bottom: 1px solid var(--border);
+     display: flex; align-items: center; justify-content: space-between; padding: 0 5%; height: 70px; }
+   .navbar__logo { font-size: 1.5rem; font-weight: 800; color: var(--primary); text-decoration: none; }
+   .navbar__links { display: flex; gap: 2rem; list-style: none; }
+   .navbar__links a { text-decoration: none; color: var(--text); font-weight: 500; transition: var(--transition); }
+   .navbar__links a:hover { color: var(--primary); }
 
-Do not stop until all 10 steps are done. The final result must be visually stunning.
+4. HERO — must be a full-viewport-height section with gradient background:
+   .hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center;
+     padding: 6rem 5% 4rem; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: #fff; }
+   .hero__title { font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 800; line-height: 1.1; margin-bottom: 1.5rem; }
+   .hero__subtitle { font-size: clamp(1rem, 2vw, 1.3rem); opacity: 0.9; max-width: 600px; margin: 0 auto 2.5rem; }
+   .hero__cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+5. BUTTONS — two styles, both must have hover effects:
+   .btn { padding: 0.85rem 2rem; border-radius: 50px; font-size: 1rem; font-weight: 600;
+     cursor: pointer; transition: var(--transition); border: 2px solid transparent; text-decoration: none; display: inline-block; }
+   .btn--primary { background: var(--primary); color: #fff; }
+   .btn--primary:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+   .btn--outline { background: transparent; color: #fff; border-color: rgba(255,255,255,0.7); }
+   .btn--outline:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
+
+6. SECTIONS — every section must have consistent padding and a title:
+   section { padding: 5rem 5%; }
+   .section__header { text-align: center; margin-bottom: 3rem; }
+   .section__tag { font-size: 0.85rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+     color: var(--primary); margin-bottom: 0.75rem; }
+   .section__title { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; color: var(--text); }
+   .section__subtitle { color: var(--text-muted); margin-top: 0.75rem; font-size: 1.1rem; }
+
+7. CARDS — must have shadow, radius, hover lift:
+   .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+   .card { background: var(--surface); border-radius: var(--radius); padding: 2rem;
+     box-shadow: var(--shadow); border: 1px solid var(--border); transition: var(--transition); }
+   .card:hover { transform: translateY(-6px); box-shadow: 0 12px 40px rgba(0,0,0,0.12); }
+   .card__icon { font-size: 2.5rem; margin-bottom: 1rem; }
+   .card__title { font-size: 1.2rem; font-weight: 700; color: var(--text); margin-bottom: 0.5rem; }
+   .card__text { color: var(--text-muted); line-height: 1.7; }
+
+8. STATS — dark band, big numbers:
+   .stats { background: var(--primary-dark); color: #fff; padding: 4rem 5%; }
+   .stats__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 2rem; text-align: center; }
+   .stat__number { font-size: 3rem; font-weight: 800; }
+   .stat__label { font-size: 0.95rem; opacity: 0.8; margin-top: 0.25rem; }
+
+9. FOOTER — dark background, multi-column grid:
+   .footer { background: #0f0f0f; color: #aaa; padding: 4rem 5% 2rem; }
+   .footer__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 2rem; margin-bottom: 3rem; }
+   .footer__col-title { color: #fff; font-weight: 700; margin-bottom: 1rem; }
+   .footer__links { list-style: none; }
+   .footer__links li { margin-bottom: 0.5rem; }
+   .footer__links a { color: #aaa; text-decoration: none; transition: var(--transition); }
+   .footer__links a:hover { color: var(--primary); }
+   .footer__bottom { border-top: 1px solid #222; padding-top: 1.5rem; text-align: center; font-size: 0.9rem; }
+
+10. RESPONSIVENESS — include at least these breakpoints:
+    @media (max-width: 768px) {
+      .navbar__links { display: none; }
+      .hero { padding: 8rem 5% 4rem; }
+      section { padding: 3rem 5%; }
+    }
+
+CRITICAL RULE: Every class you use in HTML MUST have a CSS rule. Read the HTML, extract every class, and write a rule for each one. Do not skip any.
+
+===== ITERATION WORKFLOW (follow exactly, do not skip steps) =====
+Step 1  — createFolder '${folderName}'
+Step 2  — THINK: Plan the brand colors, font, and sections for ${targetWebsite}
+Step 3  — writeFile index.html: Full HTML with all sections, semantic tags, BEM classes, real copy
+Step 4  — writeFile style.css: Complete CSS following ALL rules above. Every class from HTML must be styled.
+Step 5  — readFile index.html — extract every class name used
+Step 6  — readFile style.css — verify every class from Step 5 has a CSS rule. List any missing ones.
+Step 7  — writeFile style.css: Overwrite with COMPLETE CSS — add all missing rules found in Step 6 + media queries + hover effects
+Step 8  — writeFile index.html: Final polish — improve hero copy, add more realistic content, refine section structure
+Step 9  — writeFile script.js: sticky navbar on scroll (add .scrolled class), smooth scroll, counter animation for stat numbers, mobile menu toggle
+Step 10 — executeCommand: xdg-open ${folderName}/index.html
+Step 11 — OUTPUT: What was built, brand choices made, and design decisions.
+
+Do NOT stop early. The output must look like a real, premium website. If the CSS feels generic, rewrite it.
 `;
 }
 
@@ -194,7 +266,7 @@ async function runAgent(targetWebsite) {
             const response = await client.chat.completions.create({
                 model: "openai/gpt-4o-mini",
                 messages: messages,
-                max_tokens: 3000,
+                max_tokens: 4500,
                 response_format: { type: "json_object" }
             });
 
