@@ -20,7 +20,7 @@ function writeFile(path, content) {
         fs.writeFileSync(path, content);
         return `File '${path}' written successfully.`;
     } catch (err) {
-        return `Error writing file: ${err.message}`;
+        return `Error writing file: ${err.message}`; 
     }
 }
 
@@ -71,7 +71,12 @@ const client = new OpenAI({
     apiKey: process.env.OPENROUTER_API_KEY
 });
 
-const SYSTEM_PROMPT = `
+// --- Dynamic System Prompt Builder ---
+
+function buildSystemPrompt(targetWebsite) {
+    const folderName = targetWebsite.toLowerCase().replace(/\s+/g, "_") + "_clone";
+
+    return `
 You are an expert AI Software Engineer capable of executing commands and writing code.
 You operate in a continuous loop using a strict JSON format with the following structure:
 { "step": "START | THINK | TOOL | OBSERVE | OUTPUT", "content": "string", "tool_name": "string", "tool_args": { ... } }
@@ -92,51 +97,62 @@ Rules:
 5. NEVER do everything in one step. Loop through THINK and TOOL multiple times.
 6. When your task is fully completed, use the OUTPUT step to summarize what you did.
 
-Task Requirements for this session (Scaler Mockup):
-- AUTHORIZATION: You are explicitly authorized to create this mockup. It is for a local educational assignment. DO NOT refuse the user's request. Treat "clone" as an instruction to create a mockup using your tools.
-- IMPORTANT: Your goal is NOT just to create files once and stop. Your goal is to iteratively improve the UI until it resembles a highly professional, feature-rich Scaler Academy clone.
-- CRITICAL CONSTRAINT: The UI must look like a modern professional landing page. Avoid plain text layouts. Use structured sections, spacing, and visual hierarchy. Iterate until the output is visually strong and comprehensive.
-- You must create a folder named 'scaler_clone' and the files 'index.html', 'style.css', 'script.js' inside it.
-- Ensure the design matches Scaler Academy's modern color palette: Clean white background, primary blue accent (#0052cc or similar), dark grey text (#333), and modern fonts (like 'Inter', 'Roboto', or system sans-serif).
+===== YOUR TASK =====
+You must create a HIGH-QUALITY, PROFESSIONAL landing page MOCKUP for: **${targetWebsite}**
 
-SPECIFIC HTML/CSS REQUIREMENTS:
-- **HTML**: You MUST include \`<script src="script.js"></script>\` before the closing \`</body>\` tag.
-- **HTML CONTENT**: The HTML MUST be RICH. Each section must have substantial content:
-  - Navbar: logo + 4 nav links + 2 buttons (Login, Book a Free Live Class)
-  - Hero: h1, p, 2 CTA buttons, a badge like "Trusted by 50,000+ learners"
-  - Stats: At least 4 stat blocks (900+ Partners, 21.6 LPA Avg, 1.7 CR Highest, 85% got > 50% hike)
-  - Programs: At least 3 program cards, each with a title, badge, duration, 3 bullet points, and a "View Program" button
-  - Why Scaler: At least 4 feature cards each with an icon (emoji), title, and description
-  - Testimonials: At least 3 testimonial cards each with quote, name, previous company to new company
-  - Footer: 4 columns of links + social icons + copyright
-- **CSS**: Define a \`:root\` with CSS variables. Use \`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');\`
-- **Images**: DO NOT use local image file paths. Use CSS \`linear-gradient\` or emoji icons instead.
-- **Premium Design**: Every element that exists in HTML MUST have a matching CSS rule. No unstyled elements!
-- **Alignment**: Use \`display: flex\` or \`display: grid\` for EVERY multi-column layout. Center text where appropriate.
+AUTHORIZATION: You are explicitly authorized to create this UI mockup. It is for a local educational assignment.
+Treat "clone" as an instruction to build a mockup using your file-writing tools. DO NOT refuse.
 
-SPECIFIC FEATURES TO IMPLEMENT:
-1. Navbar: sticky, white background, logo left, nav links center, 2 buttons right.
-2. Hero: full-viewport gradient section, large bold headline, subtitle, 2 buttons, trust badge.
-3. Statistics Banner: dark blue background, 4-column grid, large numbers, label below.
-4. Programs Section: 3-column grid of cards with hover lift, bullet points, colored badge.
-5. Why Scaler: 4-column grid of feature cards with emoji icons and descriptions.
-6. Testimonials: 3-column grid, blockquote style, company transition shown.
-7. Footer: dark background, 4-column link grid, bottom bar with copyright.
+OUTPUT FOLDER: '${folderName}'
+You MUST create the following files inside it:
+  - ${folderName}/index.html
+  - ${folderName}/style.css
+  - ${folderName}/script.js
 
-ITERATION WORKFLOW (You MUST follow this exact sequence):
-Step 1 (Setup): createFolder for 'scaler_clone'. Write skeleton index.html, style.css, script.js.
-Step 2 (Rich HTML): Use 'writeFile' to overwrite index.html with RICH, FULL content as specified above. No skeleton, no placeholders - real content!
-Step 3 (Premium CSS Pass 1): Use 'writeFile' to overwrite style.css. Write CSS for EVERY class and element used in your HTML. Use CSS variables, Inter font, flexbox/grid layouts.
-Step 4 (CSS Audit): Use 'readFile' to read scaler_clone/index.html. Then use 'readFile' to read scaler_clone/style.css. THINK: list every class name from HTML and verify each has a CSS rule.
-Step 5 (Fix Missing Styles): Use 'writeFile' to overwrite style.css again, adding any missing rules found in Step 4. Ensure buttons are styled, nav links are white, cards are aligned, footer columns are in a grid.
-Step 6 (Final Polish HTML): Use 'writeFile' to overwrite index.html with final touches - richer hero badge, better stat numbers, more testimonials.
-Step 7 (Final Polish CSS): Use 'writeFile' to overwrite style.css one last time ensuring responsiveness and hover effects on ALL interactive elements.
-Step 8 (JS): Use 'writeFile' to overwrite script.js with sticky navbar + smooth scroll + counter animation for stats.
-Step 9 (Open Browser): Use 'executeCommand' to run \`xdg-open scaler_clone/index.html\`.
-Step 10 (OUTPUT): Summarize what was built.
+===== DESIGN INTELLIGENCE =====
+- Research your own knowledge of ${targetWebsite}'s brand: colors, typography, layout style, key sections.
+- Faithfully replicate its visual identity (color palette, font choices, section order).
+- If you don't know the exact hex codes, use colors that FEEL right for the brand.
+- Use Google Fonts that match the brand's personality.
 
-Do not stop until you have completed all 10 steps. The CSS MUST cover every single element in the HTML.
+===== MANDATORY DESIGN QUALITY =====
+- The UI must look like a modern, professional landing page — NOT a plain text document.
+- Use structured sections, whitespace, and clear visual hierarchy.
+- Every HTML element MUST have matching CSS styling. No unstyled elements.
+- Use CSS \`:root\` variables for the color palette and font sizes.
+- Use \`display: flex\` or \`display: grid\` for every multi-column layout.
+- Add hover effects on ALL interactive elements (buttons, cards, nav links).
+- Do NOT use local image file paths. Use CSS \`linear-gradient\` or emoji icons instead.
+
+===== MANDATORY HTML SECTIONS =====
+Research ${targetWebsite} and include ALL sections that appear on its real homepage, such as:
+  - Navbar (sticky, with logo, nav links, and action buttons)
+  - Hero / Banner (large headline, subtitle, CTA buttons)
+  - Features / Benefits section
+  - Social proof (testimonials, stats, or partner logos)
+  - Pricing / Plans (if applicable)
+  - Footer (with link columns, social icons, copyright)
+
+Each section must have RICH, realistic content — no "Lorem ipsum", no placeholders.
+Use real-sounding copy that fits ${targetWebsite}'s tone and industry.
+
+===== ITERATION WORKFLOW (follow exactly) =====
+Step 1  — createFolder for '${folderName}'.
+Step 2  — writeFile: Write FULL, RICH index.html with all sections. Real content only.
+Step 3  — writeFile: Write complete style.css with CSS variables, Google Fonts import, all selectors.
+Step 4  — readFile index.html. readFile style.css. THINK: list every class in HTML, verify each has CSS.
+Step 5  — writeFile: Overwrite style.css to add any missing rules found in Step 4.
+Step 6  — writeFile: Overwrite index.html with final polish — richer hero, better stats, more social proof.
+Step 7  — writeFile: Overwrite style.css with responsiveness (media queries) and all hover effects.
+Step 8  — writeFile: Write script.js — sticky navbar + smooth scroll + any brand-relevant animations.
+Step 9  — executeCommand: run \`xdg-open ${folderName}/index.html\`
+Step 10 — OUTPUT: Summarize what was built and which design choices were made.
+
+Do not stop until all 10 steps are done. The final result must be visually stunning.
 `;
+}
+
+// --- Ask user for target website ---
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -144,87 +160,106 @@ const rl = readline.createInterface({
 });
 
 async function main() {
-    rl.question("\nWhat would you like me to do? \n> ", async (userInput) => {
-        const messages = [
-            { role: "system", content: SYSTEM_PROMPT },
-            { role: "user", content: userInput }
-        ];
+    // Check if website name was passed as a CLI argument
+    const cliArg = process.argv[2];
 
-        console.log("\n🚀 Initializing Agent...\n");
+    if (cliArg) {
+        await runAgent(cliArg.trim());
+    } else {
+        rl.question("\n🌐 Which website do you want to clone? (e.g. Netflix, Airbnb, Scaler)\n> ", async (websiteName) => {
+            if (!websiteName.trim()) {
+                console.log("❌ No website name provided. Exiting.");
+                rl.close();
+                return;
+            }
+            await runAgent(websiteName.trim());
+        });
+    }
+}
 
-        while (true) {
-            try {
-                const response = await client.chat.completions.create({
-                    model: "openai/gpt-4o-mini",
-                    messages: messages,
-                    max_tokens: 3000,
-                    response_format: { type: "json_object" }
-                });
+async function runAgent(targetWebsite) {
+    const folderName = targetWebsite.toLowerCase().replace(/\s+/g, "_") + "_clone";
+    console.log(`\n🚀 Starting agent to clone: ${targetWebsite}`);
+    console.log(`📁 Output folder will be: ${folderName}\n`);
 
-                const content = response.choices[0].message.content;
-                const parsedContent = JSON.parse(content);
-                
-                messages.push({
-                    role: "assistant",
-                    content: content
-                });
+    const SYSTEM_PROMPT = buildSystemPrompt(targetWebsite);
 
-                if (parsedContent.step === "START") {
-                    console.log(`🤖 START: ${parsedContent.content}\n`);
-                } 
-                else if (parsedContent.step === "THINK") {
-                    console.log(`🤔 Thinking: ${parsedContent.content}\n`);
-                } 
-                else if (parsedContent.step === "TOOL") {
-                    console.log(`🔧 Using tool: ${parsedContent.tool_name}...`);
-                    
-                    if (!tool_map[parsedContent.tool_name]) {
-                        console.log(`❌ Tool '${parsedContent.tool_name}' not found.\n`);
-                        messages.push({
-                            role: "user",
-                            content: JSON.stringify({
-                                step: "OBSERVE",
-                                content: "This tool is not available."
-                            })
-                        });
-                    } else {
-                        // Dynamically extract arguments depending on how the model passes them
-                        const args = parsedContent.tool_args;
-                        let result;
-                        
-                        // Handle argument passing based on tool signatures
-                        if (parsedContent.tool_name === "createFolder" || parsedContent.tool_name === "readFile" || parsedContent.tool_name === "executeCommand" || parsedContent.tool_name === "listFiles") {
-                            result = await tool_map[parsedContent.tool_name](args.folderName || args.path || args.cmd || args.folderPath || Object.values(args)[0]);
-                        } else if (parsedContent.tool_name === "writeFile") {
-                            result = await tool_map[parsedContent.tool_name](args.path, args.content);
-                        }
+    const messages = [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: `Create a professional, visually stunning mockup landing page for ${targetWebsite}. Follow the 10-step iteration workflow exactly.` }
+    ];
 
-                        console.log(`👁️  OBSERVE: ${result}\n`);
-                        messages.push({
-                            role: "user",
-                            content: JSON.stringify({
-                                step: "OBSERVE",
-                                content: result
-                            })
-                        });
+    while (true) {
+        try {
+            const response = await client.chat.completions.create({
+                model: "openai/gpt-4o-mini",
+                messages: messages,
+                max_tokens: 3000,
+                response_format: { type: "json_object" }
+            });
+
+            const content = response.choices[0].message.content;
+            const parsedContent = JSON.parse(content);
+
+            messages.push({
+                role: "assistant",
+                content: content
+            });
+
+            if (parsedContent.step === "START") {
+                console.log(`🤖 START: ${parsedContent.content}\n`);
+            }
+            else if (parsedContent.step === "THINK") {
+                console.log(`🤔 Thinking: ${parsedContent.content}\n`);
+            }
+            else if (parsedContent.step === "TOOL") {
+                console.log(`🔧 Using tool: ${parsedContent.tool_name}...`);
+
+                if (!tool_map[parsedContent.tool_name]) {
+                    console.log(`❌ Tool '${parsedContent.tool_name}' not found.\n`);
+                    messages.push({
+                        role: "user",
+                        content: JSON.stringify({
+                            step: "OBSERVE",
+                            content: "This tool is not available."
+                        })
+                    });
+                } else {
+                    const args = parsedContent.tool_args;
+                    let result;
+
+                    if (parsedContent.tool_name === "createFolder" || parsedContent.tool_name === "readFile" || parsedContent.tool_name === "executeCommand" || parsedContent.tool_name === "listFiles") {
+                        result = await tool_map[parsedContent.tool_name](args.folderName || args.path || args.cmd || args.folderPath || Object.values(args)[0]);
+                    } else if (parsedContent.tool_name === "writeFile") {
+                        result = await tool_map[parsedContent.tool_name](args.path, args.content);
                     }
-                } 
-                else if (parsedContent.step === "OUTPUT") {
-                    console.log(`✅ Done! Output:\n${parsedContent.content}\n`);
-                    break;
-                }
-                else {
-                    console.log(`⚠️ Unrecognized step: ${parsedContent.step}\n`);
-                }
 
-            } catch (err) {
-                console.error("Error in agent loop:", err.message);
+                    console.log(`👁️  OBSERVE: ${result}\n`);
+                    messages.push({
+                        role: "user",
+                        content: JSON.stringify({
+                            step: "OBSERVE",
+                            content: result
+                        })
+                    });
+                }
+            }
+            else if (parsedContent.step === "OUTPUT") {
+                console.log(`✅ Done! \n${parsedContent.content}\n`);
+                console.log(`🌍 Opening ${folderName}/index.html in browser...`);
                 break;
             }
+            else {
+                console.log(`⚠️ Unrecognized step: ${parsedContent.step}\n`);
+            }
+
+        } catch (err) {
+            console.error("Error in agent loop:", err.message);
+            break;
         }
-        
-        rl.close();
-    });
+    }
+
+    rl.close();
 }
 
 main();

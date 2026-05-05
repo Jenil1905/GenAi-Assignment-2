@@ -1,38 +1,80 @@
-# AI Agent CLI Tool
+# 🤖 AI Website Clone Agent
 
-A conversational CLI agent that acts like an AI software engineer right in your terminal. It listens to your instructions, reasons through the steps, and generates actual files on your system using Node.js tools.
+An autonomous CLI agent that clones **any website** you name. Just tell it which site you want, and it reasons through the task step-by-step — creating a professional, visually polished landing page mockup using HTML, CSS, and JavaScript.
 
-This project specifically demonstrates an agent capable of generating a Scaler Academy website clone based on a single prompt.
+## ✨ What It Does
 
-## Setup Instructions
+- Accepts **any website name** (Netflix, Airbnb, Scaler, Zomato, etc.)
+- Autonomously researches the brand's identity (colors, fonts, layout, sections)
+- Generates a fully styled, multi-section landing page mockup
+- Iterates and self-audits to ensure quality before finishing
+- Opens the result in your browser automatically
+
+## 🚀 Setup
 
 1. **Install Dependencies**
-   Make sure you have Node.js installed, then run:
    ```bash
    npm install
    ```
 
-2. **Configure Environment Variables**
-   Open the `.env` file and add your OpenAI API Key:
+2. **Configure Environment**
+   Create a `.env` file (never commit this!):
    ```env
-   OPENAI_API_KEY=your_actual_api_key_here
+   OPENROUTER_API_KEY=your_openrouter_api_key_here
    ```
 
-## How to Run
+## ▶️ How to Run
 
-Start the agent in your terminal:
-```bash
-npm start
-```
-or 
+### Interactive Mode (prompts you for a website name)
 ```bash
 node agent.js
 ```
+```
+🌐 Which website do you want to clone? (e.g. Netflix, Airbnb, Scaler)
+> Netflix
+```
 
-## How it Works
-The agent works in an autonomous loop using the following framework:
-- **START**: Acknowledges the user's prompt.
-- **THINK**: Breaks down the problem and plans its next action.
-- **TOOL**: Uses built-in node tools (like `createFolder`, `writeFile`, `readFile`) to create the output.
-- **OBSERVE**: Checks the result of the tool execution to decide if it succeeded.
-- **OUTPUT**: Completes the task and provides a final response to the user.
+### CLI Argument Mode (pass the name directly)
+```bash
+node agent.js "Netflix"
+node agent.js "Airbnb"
+node agent.js "Zomato"
+node agent.js "Scaler"
+```
+
+The output is saved to a folder named `<website>_clone/` containing:
+- `index.html` — full landing page markup
+- `style.css` — complete, premium styling
+- `script.js` — interactivity (sticky nav, smooth scroll, animations)
+
+## 🧠 How the Agent Works
+
+The agent runs an autonomous loop using a strict reasoning framework:
+
+| Step | Description |
+|------|-------------|
+| **START** | Acknowledges the target website |
+| **THINK** | Reasons about the brand, design decisions |
+| **TOOL** | Calls a tool (`createFolder`, `writeFile`, `readFile`, etc.) |
+| **OBSERVE** | Inspects the tool result and plans next step |
+| **OUTPUT** | Summarizes what was built and opens the browser |
+
+The agent iterates through **10 structured steps** — writing the HTML, styling it, auditing for missing CSS, polishing, and adding JS — before declaring the task complete.
+
+## 📁 Project Structure
+
+```
+GenAi-Assignment2/
+├── agent.js          # Main autonomous agent
+├── package.json
+├── .env              # API key (not committed)
+├── .gitignore
+├── netflix_clone/    # Example output
+│   ├── index.html
+│   ├── style.css
+│   └── script.js
+└── scaler_clone/     # Example output (Scaler Academy)
+    ├── index.html
+    ├── style.css
+    └── script.js
+```
