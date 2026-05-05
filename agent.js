@@ -249,6 +249,29 @@ async function main() {
     }
 }
 
+// Maps uppercase/shorthand step names the LLM sometimes produces → canonical tool names
+const STEP_ALIAS_MAP = {
+    "CREATE_FOLDER":   { tool_name: "createFolder",    argKey: "folderName" },
+    "WRITE_FILE":      { tool_name: "writeFile",        argKey: null },          // special: needs path + content
+    "READ_FILE":       { tool_name: "readFile",         argKey: "path" },
+    "EXECUTE_COMMAND": { tool_name: "executeCommand",   argKey: "cmd" },
+    "LIST_FILES":      { tool_name: "listFiles",        argKey: "folderPath" },
+};
+
+async function callTool(parsedContent) {
+    const toolName = parsedContent.tool_name;
+    const args     = parsedContent.tool_args || {};
+
+    if (!tool_map[toolName]) return `Tool '${toolName}' is not available.`;
+
+    if (toolName === "writeFile") {
+        return await tool_map.writeFile(args.path, args.content);
+    }
+    // Single-arg tools
+    const singleArg = args.folderName ?? args.path ?? args.cmd ?? args.folderPath ?? Object.values(args)[0];
+    return await tool_map[toolName](singleArg);
+}
+
 async function runAgent(targetWebsite) {
     const folderName = targetWebsite.toLowerCase().replace(/\s+/g, "_") + "_clone";
     console.log(`\n🚀 Starting agent to clone: ${targetWebsite}`);
@@ -258,8 +281,10 @@ async function runAgent(targetWebsite) {
 
     const messages = [
         { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: `Create a professional, visually stunning mockup landing page for ${targetWebsite}. Follow the 10-step iteration workflow exactly.` }
+        { role: "user",   content: `Create a professional, visually stunning mockup landing page for ${targetWebsite}. Follow the iteration workflow exactly. Always use step "TOOL" with tool_name, never use the tool name as the step value.` }
     ];
+
+    let consecutiveErrors = 0;
 
     while (true) {
         try {
@@ -270,59 +295,89 @@ async function runAgent(targetWebsite) {
                 response_format: { type: "json_object" }
             });
 
-            const content = response.choices[0].message.content;
-            const parsedContent = JSON.parse(content);
+            const rawContent = response.choices[0].message.content;
 
-            messages.push({
-                role: "assistant",
-                content: content
-            });
+            // --- Graceful JSON parse with truncation recovery ---
+            let parsedContent;
+            try {
+                parsedContent = JSON.parse(rawContent);
+            } catch (parseErr) {
+                console.warn(`⚠️  JSON parse failed (likely truncated response). Asking agent to continue...\n`);
+                consecutiveErrors++;
+                if (consecutiveErrors >= 3) {
+                    console.error("❌ Too many consecutive parse errors. Stopping.");
+                    break;
+                }
+                messages.push({
+                    role: "user",
+                    content: JSON.stringify({
+                        step: "OBSERVE",
+                        content: "Your last response was truncated and could not be parsed. Please continue from where you left off and keep responses shorter if needed."
+                    })
+                });
+                continue;
+            }
+            consecutiveErrors = 0;
 
-            if (parsedContent.step === "START") {
+            messages.push({ role: "assistant", content: rawContent });
+
+            let step = parsedContent.step?.toUpperCase();
+
+            // --- Alias normalization: handle CREATE_FOLDER, WRITE_FILE, etc. ---
+            if (STEP_ALIAS_MAP[step]) {
+                const alias = STEP_ALIAS_MAP[step];
+                console.log(`🔧 [auto-mapped ${step}] Using tool: ${alias.tool_name}...`);
+
+                // Reconstruct a proper TOOL-shaped object
+                parsedContent = {
+                    step: "TOOL",
+                    tool_name: alias.tool_name,
+                    tool_args: parsedContent.tool_args || parsedContent.args || {}
+                };
+
+                // If the LLM put the args at top level, rescue them
+                if (!parsedContent.tool_args || Object.keys(parsedContent.tool_args).length === 0) {
+                    const rescued = { ...parsedContent };
+                    delete rescued.step;
+                    delete rescued.tool_name;
+                    delete rescued.content;
+                    parsedContent.tool_args = rescued;
+                }
+
+                step = "TOOL";
+            }
+
+            if (step === "START") {
                 console.log(`🤖 START: ${parsedContent.content}\n`);
             }
-            else if (parsedContent.step === "THINK") {
+            else if (step === "THINK") {
                 console.log(`🤔 Thinking: ${parsedContent.content}\n`);
             }
-            else if (parsedContent.step === "TOOL") {
+            else if (step === "TOOL") {
                 console.log(`🔧 Using tool: ${parsedContent.tool_name}...`);
-
-                if (!tool_map[parsedContent.tool_name]) {
-                    console.log(`❌ Tool '${parsedContent.tool_name}' not found.\n`);
-                    messages.push({
-                        role: "user",
-                        content: JSON.stringify({
-                            step: "OBSERVE",
-                            content: "This tool is not available."
-                        })
-                    });
-                } else {
-                    const args = parsedContent.tool_args;
-                    let result;
-
-                    if (parsedContent.tool_name === "createFolder" || parsedContent.tool_name === "readFile" || parsedContent.tool_name === "executeCommand" || parsedContent.tool_name === "listFiles") {
-                        result = await tool_map[parsedContent.tool_name](args.folderName || args.path || args.cmd || args.folderPath || Object.values(args)[0]);
-                    } else if (parsedContent.tool_name === "writeFile") {
-                        result = await tool_map[parsedContent.tool_name](args.path, args.content);
-                    }
-
-                    console.log(`👁️  OBSERVE: ${result}\n`);
-                    messages.push({
-                        role: "user",
-                        content: JSON.stringify({
-                            step: "OBSERVE",
-                            content: result
-                        })
-                    });
-                }
+                const result = await callTool(parsedContent);
+                // Truncate long results in console to keep output readable
+                const displayResult = result.length > 300 ? result.slice(0, 300) + "...[truncated]" : result;
+                console.log(`👁️  OBSERVE: ${displayResult}\n`);
+                messages.push({
+                    role: "user",
+                    content: JSON.stringify({ step: "OBSERVE", content: result })
+                });
             }
-            else if (parsedContent.step === "OUTPUT") {
-                console.log(`✅ Done! \n${parsedContent.content}\n`);
+            else if (step === "OUTPUT") {
+                console.log(`✅ Done!\n${parsedContent.content}\n`);
                 console.log(`🌍 Opening ${folderName}/index.html in browser...`);
                 break;
             }
             else {
-                console.log(`⚠️ Unrecognized step: ${parsedContent.step}\n`);
+                console.log(`⚠️ Unrecognized step: "${parsedContent.step}" — asking agent to self-correct.\n`);
+                messages.push({
+                    role: "user",
+                    content: JSON.stringify({
+                        step: "OBSERVE",
+                        content: `Unknown step "${parsedContent.step}". Valid steps are: START, THINK, TOOL, OUTPUT. For tool calls, use step="TOOL" with tool_name and tool_args.`
+                    })
+                });
             }
 
         } catch (err) {
