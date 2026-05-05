@@ -1,0 +1,15 @@
+{
+  "name": "ai-agent-cli",
+  "version": "1.0.0",
+  "description": "AI Agent CLI Tool for cloning Scaler website",
+  "main": "agent.js",
+  "type": "module",
+  "scripts": {
+    "start": "node agent.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.8",
+    "dotenv": "^16.4.5",
+    "openai": "^4.28.4"
+  }
+}
